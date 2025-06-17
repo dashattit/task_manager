@@ -1,5 +1,4 @@
 export const LocalStorageService = {
-    // Инициализация базы данных
     initDB() {
         if (!localStorage.getItem('taskManagerDB')) {
             const initialDB = {
@@ -10,7 +9,6 @@ export const LocalStorageService = {
         }
     },
 
-    // Добавление пользователя
     registerUser(user) {
         const db = this.getDB();
         if (db) {
@@ -34,7 +32,6 @@ export const LocalStorageService = {
         }
     },
 
-    // Аутентификация пользователя
     loginUser(email, password) {
         const db = this.getDB();
         if (db) {
@@ -69,7 +66,6 @@ export const LocalStorageService = {
         return null;
     },
 
-    // Вспомогательные методы
     getDB() {
         const db = localStorage.getItem('taskManagerDB');
         return db ? JSON.parse(db) : null;
@@ -79,12 +75,19 @@ export const LocalStorageService = {
         return `tm-${btoa(userId)}-${Date.now()}`;
     },
 
-
     updateUser(userId, updates) {
         const db = this.getDB();
         if (db) {
             const userIndex = db.users.findIndex(u => u.id === userId);
             if (userIndex !== -1) {
+                // Проверяем, не занят ли новый email другим пользователем
+                if (updates.email && updates.email !== db.users[userIndex].email) {
+                    const emailExists = db.users.some(u => u.email === updates.email && u.id !== userId);
+                    if (emailExists) {
+                        throw new Error('Email уже занят');
+                    }
+                }
+
                 db.users[userIndex] = {
                     ...db.users[userIndex],
                     ...updates,
@@ -142,10 +145,13 @@ export const LocalStorageService = {
     deleteTask(taskId) {
         const db = this.getDB();
         if (db?.tasks) {
+            console.log('Before deletion:', db.tasks.length); // Логируем перед удалением
             db.tasks = db.tasks.filter(t => t.id !== taskId);
+            console.log('After deletion:', db.tasks.length); // Логируем после удаления
             localStorage.setItem('taskManagerDB', JSON.stringify(db));
+            return true; // Явно возвращаем успешное выполнение
         }
+        throw new Error('Task not found');
     }
 };
-// Инициализация при импорте
 LocalStorageService.initDB();

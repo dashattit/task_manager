@@ -29,8 +29,9 @@
         </div>
 
         <div v-if="showArchive" class="archive-section">
+          <h2>Архив задач ({{ archivedTasks.length }})</h2>
+
           <div class="archive-controls">
-            <h2>Архив задач ({{ filteredArchivedTasks.length }})</h2>
             <div class="date-filter">
               <label>Фильтр по дате:</label>
               <select v-model="dateFilter">
@@ -49,7 +50,7 @@
                 class="archived-task"
             >
               <h4>{{ task.title }}</h4>
-              <p v-if="task.description">{{ task.description }}</p>
+              <p v-if="task.description" class="task-description">{{ task.description }}</p>
               <div class="task-meta">
                 <span>Завершено: {{ formatDate(task.archivedAt) }}</span>
                 <span>Статус: {{ getStatusText(task.status) }}</span>
@@ -99,12 +100,15 @@ export default {
     filteredArchivedTasks() {
       const now = new Date();
       return this.archivedTasks.filter(task => {
+        if (!task.archivedAt) return false;
         const taskDate = new Date(task.archivedAt);
+
         switch (this.dateFilter) {
           case 'today':
             return taskDate.toDateString() === now.toDateString();
           case 'week':
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
             return taskDate >= startOfWeek;
           case 'month':
             return taskDate.getMonth() === now.getMonth() &&
@@ -121,7 +125,6 @@ export default {
     },
     handleProfileUpdated() {
       this.isEditing = false;
-      this.loadArchivedTasks();
     },
     logout() {
       localStorage.removeItem('auth_token');
@@ -129,7 +132,9 @@ export default {
     },
     toggleArchive() {
       this.showArchive = !this.showArchive;
-      if (this.showArchive) this.loadArchivedTasks();
+      if (this.showArchive) {
+        this.loadArchivedTasks();
+      }
     },
     loadArchivedTasks() {
       const token = localStorage.getItem('auth_token');
@@ -149,11 +154,17 @@ export default {
       return statusMap[status] || status;
     },
     formatDate(date) {
+      if (!date) return '';
       return new Date(date).toLocaleDateString('ru-RU', {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
       });
+    }
+  },
+  mounted() {
+    if (this.showArchive) {
+      this.loadArchivedTasks();
     }
   }
 };
@@ -163,37 +174,37 @@ export default {
 .profile-container {
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 32px;
 }
 
 .profile-card {
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(7, 7, 7, 0.5);
-  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 32px;
 }
 
 .profile-avatar {
   width: 80px;
   height: 80px;
-  background: #6e6e6e;
+  background: #3a56d4;
   color: white;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 24px;
   font-weight: bold;
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 24px;
 }
 
 .profile-info {
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
 }
 
 .profile-field {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
   border-bottom: 1px solid #eee;
 }
 
@@ -207,8 +218,8 @@ export default {
 .profile-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 16px;
+  margin-top: 32px;
 }
 
 .profile-actions button {
@@ -220,13 +231,13 @@ export default {
   color: white;
 }
 
-.btn-edit { background: #006fff; }
+.btn-edit { background: #3a56d4; }
 .btn-archive { background: #666; }
-.btn-logout { background: #32abff; }
+.btn-logout { background: #ff4444; }
 
 .archive-section {
-  margin-top: 2rem;
-  padding-top: 1rem;
+  margin-top: 32px;
+  padding-top: 16px;
   border-top: 1px solid #eee;
 }
 
@@ -234,17 +245,17 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
 }
 
 .date-filter {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .date-filter select {
-  padding: 0.5rem;
+  padding: 8px;
   border-radius: 4px;
   border: 1px solid #ddd;
 }
@@ -254,12 +265,18 @@ export default {
   border-radius: 6px;
   padding: 15px;
   margin-bottom: 15px;
-  border-left: 4px solid #666;
+  border-left: 4px solid #3a56d4;
 }
 
 .archived-task h4 {
   margin: 0 0 10px;
   color: #2c3e50;
+}
+
+.task-description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .task-meta {
@@ -273,6 +290,6 @@ export default {
 .empty-archive {
   color: #888;
   text-align: center;
-  padding: 1rem;
+  padding: 16px;
 }
 </style>

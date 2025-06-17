@@ -18,13 +18,12 @@
             v-model="form.email"
             type="email"
             :class="{ 'is-invalid': errors.email }"
-            disabled
         >
-        <small class="text-muted">Для изменения email обратитесь в поддержку</small>
+        <div v-if="errors.email" class="invalid-feedback">{{ errors.email }}</div>
       </div>
 
       <div class="form-group">
-        <label>Текущий пароль</label>
+        <label>Текущий пароль (для подтверждения изменений)</label>
         <input
             v-model="form.currentPassword"
             type="password"
@@ -87,7 +86,24 @@ export default {
         isValid = false;
       }
 
+      if (!this.form.email) {
+        this.errors.email = 'Email обязателен';
+        isValid = false;
+      } else if (!this.validateEmail(this.form.email)) {
+        this.errors.email = 'Введите корректный email';
+        isValid = false;
+      }
+
+      if (!this.form.currentPassword) {
+        this.errors.currentPassword = 'Текущий пароль обязателен';
+        isValid = false;
+      }
+
       return isValid;
+    },
+    validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
     },
     async handleSubmit() {
       if (!this.validateForm()) return;
@@ -102,8 +118,16 @@ export default {
           throw new Error('Сессия устарела');
         }
 
+        // Проверяем текущий пароль
+        const user = LocalStorageService.loginUser(currentUser.email, this.form.currentPassword);
+        if (!user) {
+          throw new Error('Неверный пароль');
+        }
+
+        // Обновляем данные
         const updates = {
-          name: this.form.name
+          name: this.form.name,
+          email: this.form.email
         };
 
         if (this.form.newPassword) {
@@ -111,10 +135,23 @@ export default {
         }
 
         await LocalStorageService.updateUser(currentUser.id, updates);
-        this.$emit('saved');
+
+        // Обновляем email в текущей сессии
+        const updatedUser = { ...currentUser, ...updates };
+        const sessionIndex = LocalStorageService.getDB().sessions.findIndex(s => s.token === token);
+        if (sessionIndex !== -1) {
+          LocalStorageService.getDB().sessions[sessionIndex].userId = updatedUser.id;
+          localStorage.setItem('taskManagerDB', JSON.stringify(LocalStorageService.getDB()));
+        }
+
+        this.$emit('saved', updatedUser);
         this.$emit('close');
       } catch (error) {
-        this.errors.currentPassword = 'Неверный пароль';
+        if (error.message === 'Неверный пароль') {
+          this.errors.currentPassword = 'Неверный пароль';
+        } else {
+          this.errors.email = 'Пользователь с таким email уже существует';
+        }
       } finally {
         this.loading = false;
       }
@@ -130,10 +167,10 @@ export default {
 .edit-profile-form {
   max-width: 500px;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 15px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
 .form-group {
@@ -148,30 +185,19 @@ export default {
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
+  border-color: #4361ee;
   border-radius: 4px;
-}
-
-.form-group input[disabled] {
-  background-color: #f5f5f5;
-}
-
-.text-muted {
-  color: #666;
-  font-size: 0.875rem;
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
-  margin-top: 2rem;
 }
 
 .btn-save {
   flex: 1;
   padding: 0.75rem;
-  background-color: #006fff;
+  background-color: #4361ee;
   color: white;
   border: none;
   border-radius: 4px;
@@ -179,14 +205,14 @@ export default {
 }
 
 .btn-save:disabled {
-  background-color: #ccc;
+  background-color: #b5b5b5;
   cursor: not-allowed;
 }
 
 .btn-cancel {
   flex: 1;
   padding: 0.75rem;
-  background-color: #bfbfbf;
+  background-color: #afafaf;
   color: #ffffff;
   border: none;
   border-radius: 4px;

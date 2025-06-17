@@ -2,10 +2,10 @@
   <div class="task-creator">
     <form @submit.prevent="handleSubmit">
       <div class="form-group">
+        <label>Название задачи:</label>
         <input
             v-model="form.title"
             type="text"
-            placeholder="Название задачи"
             required
             class="narrow-input"
         >
@@ -81,14 +81,15 @@ export default {
   width: 50%;
   min-width: 200px;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #3a56d4;
   border-radius: 4px;
+  height: 36px; /* Добавлено для уменьшения высоты */
 }
 
 textarea {
-  width: 100%;
+  width: 90%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #3a56d4;
   border-radius: 4px;
 }
 

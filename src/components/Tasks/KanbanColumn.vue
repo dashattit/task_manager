@@ -7,12 +7,14 @@
         item-key="id"
         @change="onDragChange"
         class="drag-area"
+        :animation="200"
+        ghost-class="ghost-card"
     >
       <template #item="{ element }">
         <TaskCard
             :task="element"
             @delete="handleTaskDelete"
-            :show-archive="showArchive"
+            :show-archive="status === 'done'"
             @archive="handleTaskArchive"
         />
       </template>
@@ -46,6 +48,7 @@ export default {
       }
     },
     handleTaskDelete(taskId) {
+      console.log('Deleting task with ID:', taskId);
       this.$emit('task-deleted', taskId);
     },
     handleTaskArchive(taskId) {
@@ -57,7 +60,7 @@ export default {
 
 <style scoped>
 .kanban-column {
-  background: #e6e6e6;
+  background: #f5f7fa;
   border-radius: 8px;
   padding: 15px;
   min-height: 200px;
@@ -69,9 +72,10 @@ export default {
 
 .kanban-column h3 {
   margin-top: 0;
-  color: #2c3e50;
-  font-size: 1.1rem;
+  color: #ffffff;
+  text-align: center;
+  font-size: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #e2e8f0;
 }
 </style>

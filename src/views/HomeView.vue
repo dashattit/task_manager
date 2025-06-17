@@ -1,15 +1,11 @@
 <template>
   <div class="home">
-    <h1>Мой Канбан</h1>
-
     <div class="kanban-board">
-      <!-- Колонка для создания задач -->
+
       <div class="kanban-column create-column">
         <h2>Создать задачу</h2>
         <TaskCreator @task-created="handleTaskCreated" />
       </div>
-
-      <!-- Колонка "Новые" -->
       <KanbanColumn
           title="Новые"
           status="new"
@@ -17,8 +13,6 @@
           @task-updated="handleTaskUpdated"
           @task-deleted="handleTaskDeleted"
       />
-
-      <!-- Колонка "В работе" -->
       <KanbanColumn
           title="В работе"
           status="in-progress"
@@ -26,8 +20,6 @@
           @task-updated="handleTaskUpdated"
           @task-deleted="handleTaskDeleted"
       />
-
-      <!-- Колонка "Завершённые" -->
       <KanbanColumn
           title="Завершённые"
           status="done"
@@ -91,23 +83,31 @@ export default {
       }
     },
     async handleTaskDeleted(taskId) {
+      console.log('Received delete for task ID:', taskId);
       try {
         await LocalStorageService.deleteTask(taskId);
-        this.loadTasks();
+
+        this.tasks = this.tasks.filter(task => {
+          console.log(task.id, 'vs', taskId);
+          return task.id !== taskId;
+        });
       } catch (error) {
         console.error('Ошибка удаления задачи:', error);
       }
     },
     async handleTaskArchived(taskId) {
       try {
+        // 1. Помечаем задачу как архивную
         await LocalStorageService.updateTask(taskId, {
           archived: true,
           archivedAt: new Date().toISOString(),
-          status: 'done'
+          status: 'done' // На всякий случай обновляем статус
         });
-        this.loadTasks();
+
+        // 2. Удаляем задачу из текущего списка
+        this.tasks = this.tasks.filter(task => task.id !== taskId);
       } catch (error) {
-        console.error('Ошибка архивирования задачи:', error);
+        console.error('Ошибка архивации:', error);
       }
     }
   }
@@ -130,21 +130,21 @@ export default {
 }
 
 .kanban-column {
-  background: #e6e6e6;
+  background: #3a56d4;
   border-radius: 8px;
   padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   min-height: 200px;
 }
 
 .create-column {
-  background: #e3f2fd;
+  background: #3a56d4;
 }
 
 .kanban-column h2 {
   margin-top: 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
+  color: white;
+  font-size: 16px;
+  text-align: center;
   padding-bottom: 10px;
   border-bottom: 1px solid #ddd;
 }

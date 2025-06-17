@@ -116,7 +116,7 @@ export default {
 
 .invalid-feedback {
   color: #dc3545;
-  font-size: 0.875em;
-  margin-top: 0.25rem;
+  font-size: 14px;
+  margin-top: 16px;
 }
 </style>
